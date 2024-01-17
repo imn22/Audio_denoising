@@ -61,13 +61,9 @@ signals_path='data/train_small'
 # create_spec(signals_path, 512,256, noisy=True)
 def retreive_sig(magnitude_db, phase,n_fft, hop_length_fft ):
     #first go backt othe magnitude scale
-
-    #take only one channel, since it contains the magnitude information
     magnitude= librosa.db_to_amplitude(magnitude_db, ref= 1.0)
-
     #include the phase
     signal_with_phase= magnitude * phase 
-
     #recsntrct
     audio= librosa.core.istft(signal_with_phase, hop_length=hop_length_fft, n_fft=n_fft)
     return audio
