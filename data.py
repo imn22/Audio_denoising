@@ -11,6 +11,7 @@ def scale_minmax(X, min_val, max_val):
 
 def create_spec(data_dir,n_fft, hop_length_fft, noisy=True):
     signal_type = 'noisy' if noisy else 'original'
+    print(signal_type)
     spec_dir = os.path.join(data_dir, signal_type , 'spec')
     phase_dir = os.path.join(data_dir, signal_type , 'phase')
     
