@@ -3,6 +3,8 @@ import numpy as np
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
+from torch.utils.data import Dataset
+from PIL import Image
 
 def scale_minmax(X, min_val, max_val):
     X_std = (X - X.min()) / (X.max() - X.min())
@@ -69,3 +71,24 @@ def retreive_sig(magnitude_db, phase,n_fft, hop_length_fft ):
     audio= librosa.core.istft(signal_with_phase, hop_length=hop_length_fft, n_fft=n_fft)
     return audio
 
+
+
+class MyDataset(Dataset):
+    def __init__(self, path, transform=None):
+        super().__init__()
+        self.path= path
+        self.transform= transform
+        self.file_names= os.listdir(os.path.join(path, 'original', 'spec'))
+        
+
+    def __len__(self):
+        return len(self.file_names)
+    def __getitem__ (self, idx):
+        noisy_spec= Image.fromarray(np.load(os.path.join(self.path, 'noisy', 'spec', self.file_names[idx])))
+        original_spec=Image.fromarray( np.load(os.path.join(self.path, 'original', 'spec', self.file_names[idx])))
+
+        if self.transform:
+            noisy_spec= self.transform(noisy_spec)
+            original_spec= self.transform(original_spec)
+
+        return  noisy_spec, original_spec
