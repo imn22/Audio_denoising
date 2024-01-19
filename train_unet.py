@@ -3,6 +3,8 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from data import MyDataset
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 
 def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
     print("Loading the data...")
@@ -24,7 +26,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
 
     # Training loop
     print('\n start training')
-    for epoch in range(n_epochs):
+    for epoch in tqdm(range(n_epochs)):
         model.train()  
         train_loss = 0.0
 
@@ -53,12 +55,5 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
         average_val_loss = val_loss / len(val_loader)
         val_losses.append(average_val_loss)
         print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}")
-
-    # Plot training and validation losses
-    plt.plot(train_losses, label='Train Loss')
-    plt.plot(val_losses, label='Validation Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss')
-    plt.legend()
-    plt.show()
+    return train_losses, val_losses
+    
