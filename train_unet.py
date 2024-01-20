@@ -1,7 +1,10 @@
 import torch
 from torch import nn
+import torchvision
 from torch.utils.data import DataLoader, random_split
-from torchmetrics.audio import PerceptualEvaluationSpeechQuality, ShortTimeObjectiveIntelligibility
+from torchmetrics.audio import PerceptualEvaluationSpeechQuality
+from torchmetrics.functional.audio.stoi import short_time_objective_intelligibility
+from torchmetrics.audio import ShortTimeObjectiveIntelligibility
 from data import MyDataset, retreive_sig
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -64,8 +67,8 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
                 val_loss += loss_val.item()
 
                 #Compute PESQ and STOI 
-                pesq_score = get_pesq(original_singal_val.cpu().numpy(), predicted_val.cpu().numpy(), noisy_phase_val.cpu().numpy())
-                stoi_score = get_stoi(original_singal_val.cpu().numpy(), predicted_val.cpu().numpy(), noisy_phase_val.cpu().numpy())
+                pesq_score = get_pesq(original_singal_val, predicted_val, noisy_phase_val)
+                stoi_score = get_stoi(original_singal_val, predicted_val, noisy_phase_val)
                 total_pesq_score += pesq_score
                 total_stoi_score += stoi_score
 
@@ -82,13 +85,29 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
     
 
 
-def get_pesq(original_singal_val, predicted_val, noisy_phase_val):
+def get_pesq(original_singal, predicted, noisy_phase):
     #retrive predicted signal
-    predicted_sig= retreive_sig((predicted_val, noisy_phase_val, args.n_fft, args.hop_length_fft))
+    original_singal= original_singal[1].cpu()
+    noisy_phase= noisy_phase.cpu().numpy()
+    resize_spec= torchvision.transforms.Resize((args.height, args.width))
+    predicted= resize_spec(predicted)
+    predicted= predicted.cpu().numpy()
+    predicted_sig= retreive_sig(predicted, noisy_phase, args.n_fft, args.hop_length_fft)
+    predicted_sig= torch.tensor(predicted_sig)
     # just apply pesq
-    
-    
-    return
+    pesq = PerceptualEvaluationSpeechQuality(args.fs, 'nb')
+    result= pesq(predicted_sig, original_singal)
+    return result.item()
 
-def get_stoi(original_sig, predicted_sig):
-    return
+def get_stoi(original_singal, predicted, noisy_phase):
+    original_singal= original_singal[1].cpu()
+    noisy_phase= noisy_phase.cpu().numpy()
+    resize_spec= torchvision.transforms.Resize((args.height, args.width))
+    predicted= resize_spec(predicted)
+    predicted= predicted.cpu().numpy()
+    predicted_sig= retreive_sig(predicted, noisy_phase, args.n_fft, args.hop_length_fft)
+    predicted_sig= torch.tensor(predicted_sig)
+
+    stoi = ShortTimeObjectiveIntelligibility(args.fs, False)
+    result= stoi(predicted_sig, original_singal)
+    return result.item()

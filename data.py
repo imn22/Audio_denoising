@@ -5,6 +5,10 @@ import librosa.display
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 from PIL import Image
+import scipy
+from args import config
+args= config()
+
 
 def create_spec(data_dir,n_fft, hop_length_fft, noisy=True):
     signal_type = 'noisy' if noisy else 'original'
@@ -28,25 +32,13 @@ def create_spec(data_dir,n_fft, hop_length_fft, noisy=True):
         magnitude, phase = librosa.magphase(stft)
         # Convert magnitude to decibel scale
         magnitude_db = librosa.amplitude_to_db(np.abs(magnitude), ref=np.max)
-        # print('max and min magnitude db', np.max(magnitude_db), np.min(magnitude_db))
-
-        # show spectrogram image
-        # plt.figure(figsize=(10, 4))
         librosa.display.specshow(magnitude_db, sr=sr, hop_length=hop_length_fft, x_axis='time', y_axis='hz')
-        # plt.colorbar(format='%+2.0f dB')
-        # plt.title(f'Spectrogram of {signal_name}')
-        # plt.show()
         #save spec
         spec_img_path = os.path.join(spec_dir, signal_name + '.npy')
         np.save(spec_img_path, magnitude_db)
-
         # Display phase spectrogram
         phase_angle = np.angle(phase)
-        # plt.figure(figsize=(10, 4))
         librosa.display.specshow(phase_angle, sr=sr, hop_length=hop_length_fft, x_axis='time', y_axis='hz', cmap='twilight')
-        # plt.colorbar(format='%+2.0f rad')
-        # plt.title(f'Phase Spectrogram of {signal_name}')
-        # plt.show()
         # Save phase data
         phase_path = os.path.join(phase_dir, signal_name + '.npy')
         np.save(phase_path, phase)
@@ -62,7 +54,12 @@ def retreive_sig(magnitude_db, phase,n_fft, hop_length_fft ):
     #include the phase
     signal_with_phase= magnitude * phase 
     #recsntrct
-    audio= librosa.core.istft(signal_with_phase, hop_length=hop_length_fft, n_fft=n_fft)
+    audio= librosa.core.istft(signal_with_phase, hop_length=hop_length_fft, n_fft=n_fft, center=True)
+    if len(audio.shape)==3:
+        if audio.shape[2]<args.sig_legnth:
+            diff= args.sig_legnth- audio.shape[2]
+            audio =np.pad(audio,((0,0), (0,0),(0, diff)), mode= 'constant')
+            audio= audio.reshape(-1, args.sig_legnth)
     return audio
 
 
@@ -80,14 +77,14 @@ class MyDataset(Dataset):
     def __getitem__ (self, idx):
         noisy_spec= Image.fromarray(np.load(os.path.join(self.path, 'noisy', 'spec', self.file_names[idx])))
         original_spec=Image.fromarray( np.load(os.path.join(self.path, 'original', 'spec', self.file_names[idx])))
-        noisy_phase=Image.fromarray( np.load(os.path.join(self.path, 'noisy', 'phase', self.file_names[idx])))
-        original_singal=np.load(os.path.join(self.path, 'original', 'signal', self.file_names[idx])) #will be usd to compute the metrics
+        noisy_phase=np.load(os.path.join(self.path, 'noisy', 'phase', self.file_names[idx]))
+        original_singal=scipy.io.wavfile.read(os.path.join(self.path, 'original', 'signal', self.file_names[idx].split('.')[0]+'.wav')) #will be usd to compute the metrics
+
 
 
 
         if self.transform:
             noisy_spec= self.transform(noisy_spec)
             original_spec= self.transform(original_spec)
-            noisy_phase= self.transform(noisy_phase)
 
         return  noisy_spec, original_spec, noisy_phase, original_singal

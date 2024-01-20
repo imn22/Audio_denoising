@@ -20,24 +20,26 @@ def test(model, data_path, batch_size, transform,  save_path=None):
     loss_function = nn.MSELoss()
     model.eval()  # Set the model to evaluation mode
     test_loss = 0.0
-
+    total_pesq_score=0.0
+    total_stoi_score=0.0
     with torch.no_grad():
-        for noisy_val, original_val in test_loader:
-            noisy_val, original_val = noisy_val.to(device), original_val.to(device)
-            predicted_val = model(noisy_val)
-            loss_val = loss_function(predicted_val, original_val)
-            test_loss += loss_val.item()
+        for data in  test_loader:
+            noisy_spec_test, original_spec_test,  noisy_phase_test, original_singal_test = data
+            noisy_spec_test, original_spec_test = noisy_spec_test.to(device), original_spec_test.to(device)
+            predicted_test = model(noisy_spec_test)
+            loss_test = loss_function(predicted_test, original_spec_test)
+            test_loss += loss_test.item()
 
-            pesq_score = get_pesq(original_val.cpu().numpy(), predicted_val.cpu().numpy())
-            stoi_score = get_stoi(original_val.cpu().numpy(), predicted_val.cpu().numpy())
+            #Compute PESQ and STOI 
+            pesq_score = get_pesq(original_singal_test, predicted_test, noisy_phase_test)
+            stoi_score = get_stoi(original_singal_test, predicted_test, noisy_phase_test)
             total_pesq_score += pesq_score
             total_stoi_score += stoi_score
 
-    average_test_loss = test_loss / len(test_loader)
-    average_pesq_score = total_pesq_score / len(test_loader)
-    average_stoi_score = total_stoi_score / len(test_loader)
-    print(f"Test Loss: {average_test_loss:.4f}")
+        #Calculating average metrics for the epoch
+        average_test_loss = test_loss / len(test_loader)
+        average_pesq_score = total_pesq_score / len(test_loader)
+        average_stoi_score = total_stoi_score / len(test_loader)
+        print(f"Test Loss: {average_test_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
 
-
-    #ajouter les metrics mentionnées dans l'énnoncé
     return average_test_loss, average_pesq_score, average_stoi_score
