@@ -2,6 +2,8 @@ numpy
 matplotlib
 torch
 torchvision
+torchmetrics
 scipy
 scikit-learn
 Ipython
+torchmetrics

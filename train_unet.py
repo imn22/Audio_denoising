@@ -1,9 +1,12 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, random_split
-from data import MyDataset
+from torchmetrics.audio import PerceptualEvaluationSpeechQuality, ShortTimeObjectiveIntelligibility
+from data import MyDataset, retreive_sig
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from args import config
+args= config()
 
 
 def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
@@ -23,17 +26,20 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)  
     train_losses = []
     val_losses = []
-
+    val_pesq_scores=[]
+    val_stoi_scores=[]
     # Training loop
     print('\n start training')
     for epoch in tqdm(range(n_epochs)):
         model.train()  
         train_loss = 0.0
 
-        for noisy, original in train_loader:
-            noisy, original = noisy.to(device), original.to(device)
-            predicted = model(noisy)
-            loss = loss_function(predicted, original)
+        for data in train_loader:
+            noisy_spec, original_spec, _, _ = data
+            noisy_spec, original_spec = noisy_spec.to(device), original_spec.to(device)
+
+            predicted = model(noisy_spec)
+            loss = loss_function(predicted, original_spec)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -43,17 +49,46 @@ def train(model, data_path, batch_size, n_epochs, transform, save_path=None):
         train_losses.append(average_train_loss)
 
         # Validation
-        model.eval()  
+        model.eval()
         val_loss = 0.0
+        total_pesq_score = 0.0
+        total_stoi_score = 0.0
 
         with torch.no_grad():
-            for noisy_val, original_val in val_loader:
-                noisy_val, original_val = noisy_val.to(device), original_val.to(device)
-                predicted_val = model(noisy_val)
-                loss_val = loss_function(predicted_val, original_val)
+            for data in  val_loader:
+                noisy_spec_val, original_spec_val,  noisy_phase_val, original_singal_val = data
+                noisy_spec_val, original_spec_val = noisy_spec_val.to(device), original_spec_val.to(device)
+                predicted_val = model(noisy_spec_val)
+
+                loss_val = loss_function(predicted_val, original_spec_val)
                 val_loss += loss_val.item()
+
+                #Compute PESQ and STOI 
+                pesq_score = get_pesq(original_singal_val.cpu().numpy(), predicted_val.cpu().numpy(), noisy_phase_val.cpu().numpy())
+                stoi_score = get_stoi(original_singal_val.cpu().numpy(), predicted_val.cpu().numpy(), noisy_phase_val.cpu().numpy())
+                total_pesq_score += pesq_score
+                total_stoi_score += stoi_score
+
+        #Calculating average metrics for the epoch
         average_val_loss = val_loss / len(val_loader)
+        average_pesq_score = total_pesq_score / len(val_loader)
+        average_stoi_score = total_stoi_score / len(val_loader)
         val_losses.append(average_val_loss)
-        print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}")
-    return train_losses, val_losses
+        val_pesq_scores.append(average_pesq_score)
+        val_stoi_scores.append(average_stoi_score)
+        print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
+
+    return train_losses, val_losses, val_pesq_scores, val_stoi_scores
     
+
+
+def get_pesq(original_singal_val, predicted_val, noisy_phase_val):
+    #retrive predicted signal
+    predicted_sig= retreive_sig((predicted_val, noisy_phase_val, args.n_fft, args.hop_length_fft))
+    # just apply pesq
+    
+    
+    return
+
+def get_stoi(original_sig, predicted_sig):
+    return
