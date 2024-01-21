@@ -11,13 +11,15 @@ from train_unet import get_pesq, get_stoi
 from args import config
 args= config()
 
-def test(model, data_path, batch_size, transform,  save_dir=None):
+def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=None):
     print("Loading the data...")
     dataset = MyDataset(data_path, transform=transform)
     
     # Assuming the entire dataset is for testing
     test_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
+    # load checkpoint
+    checkpoint= torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device:", device)
     model.to(device)

@@ -34,13 +34,13 @@ def create_spec(data_dir,n_fft, hop_length_fft, noisy=True):
         magnitude_db = librosa.amplitude_to_db(np.abs(magnitude), ref=np.max)
         librosa.display.specshow(magnitude_db, sr=sr, hop_length=hop_length_fft, x_axis='time', y_axis='hz')
         #save spec
-        spec_img_path = os.path.join(spec_dir, signal_name + '.npy')
+        spec_img_path = os.path.join(spec_dir, signal_name.split('.')[0] + '.npy')
         np.save(spec_img_path, magnitude_db)
         # Display phase spectrogram
         phase_angle = np.angle(phase)
         librosa.display.specshow(phase_angle, sr=sr, hop_length=hop_length_fft, x_axis='time', y_axis='hz', cmap='twilight')
         # Save phase data
-        phase_path = os.path.join(phase_dir, signal_name + '.npy')
+        phase_path = os.path.join(phase_dir, signal_name.split('.')[0] + '.npy')
         np.save(phase_path, phase)
 
     print(f"Spectrograms and phases stored in '{spec_dir}' and '{phase_dir}' respectively.")

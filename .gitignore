@@ -2,8 +2,11 @@ train_noise/
 train/
 train_small_noise/
 train_small/
+data/
 data.zip
-
 *.zip
+*.pth
+*.pickle
+*.npy
 
 
