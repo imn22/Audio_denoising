@@ -56,7 +56,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
             min_loss= train_loss
             save_path = os.path.join(save_dir, f'checkpoint_ep_{epoch}.pth')
             print('checkpoint saved at: ', save_path,)
-            torch.save(model.sate_dict(), save_path)
+            torch.save(model.state_dict(), save_path)
 
         # Validation
         model.eval()
