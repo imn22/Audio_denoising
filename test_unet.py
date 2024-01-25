@@ -30,7 +30,7 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
     total_pesq_score=0.0
     total_stoi_score=0.0
 
-    original_signal=[]
+    file_names=[]
     spec=[]
     phase=[]
     with torch.no_grad():
@@ -50,13 +50,13 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
             total_stoi_score += stoi_score
 
             #to save
-            original_signal.append(original_singal_test)
+            file_names.append(file_name_test)
             spec.append(predicted_test)
             phase.append(noisy_phase_test)
 
             # Create result dictionary after the loop
             result_dict = {
-                'file_name': file_name_test,
+                'file_name': file_names,
                 'predicted_spec': spec,
                 'noisy_phase': phase
             }
