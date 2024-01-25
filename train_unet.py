@@ -39,7 +39,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         train_loss = 0.0
 
         for data in train_loader:
-            noisy_spec, original_spec, _, _ = data
+            noisy_spec, original_spec, _, _ , _= data
             noisy_spec, original_spec = noisy_spec.to(device), original_spec.to(device)
 
             predicted = model(noisy_spec)
@@ -66,7 +66,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
 
         with torch.no_grad():
             for data in  val_loader:
-                noisy_spec_val, original_spec_val,  noisy_phase_val, original_singal_val = data
+                noisy_spec_val, original_spec_val,  noisy_phase_val, original_singal_val, _ = data
                 noisy_spec_val, original_spec_val = noisy_spec_val.to(device), original_spec_val.to(device)
                 predicted_val = model(noisy_spec_val)
 

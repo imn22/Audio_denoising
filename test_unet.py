@@ -35,7 +35,7 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
     phase=[]
     with torch.no_grad():
         for data in  test_loader:
-            noisy_spec_test, original_spec_test,  noisy_phase_test, original_singal_test = data
+            noisy_spec_test, original_spec_test,  noisy_phase_test, original_singal_test, file_name_test = data
             noisy_spec_test, original_spec_test = noisy_spec_test.to(device), original_spec_test.to(device)
             predicted_test = model(noisy_spec_test)
             loss_test = loss_function(predicted_test, original_spec_test)
@@ -56,7 +56,7 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
 
             # Create result dictionary after the loop
             result_dict = {
-                'original_signal': original_signal,
+                'file_name': file_name_test,
                 'predicted_spec': spec,
                 'noisy_phase': phase
             }

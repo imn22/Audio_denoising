@@ -81,11 +81,9 @@ class MyDataset(Dataset):
         noisy_phase=np.load(os.path.join(self.path, 'noisy', 'phase', self.file_names[idx]))
         original_singal=scipy.io.wavfile.read(os.path.join(self.path, 'original', 'signal', self.file_names[idx].split('.')[0]+'.wav')) #will be usd to compute the metrics
 
-
-
-
+        file_name= self.file_names[idx].split('.')[0] # retrun only the fsirts part of the filepath
         if self.transform:
             noisy_spec= self.transform(noisy_spec)
             original_spec= self.transform(original_spec)
 
-        return  noisy_spec, original_spec, noisy_phase, original_singal
+        return  noisy_spec, original_spec, noisy_phase, original_singal, file_name
