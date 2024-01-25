@@ -68,6 +68,7 @@ class MyDataset(Dataset):
     def __init__(self, path, transform=None):
         super().__init__()
         self.path= path
+        
         self.transform= transform
         self.file_names= os.listdir(os.path.join(path, 'original', 'spec'))
         
@@ -75,7 +76,7 @@ class MyDataset(Dataset):
     def __len__(self):
         return len(self.file_names)
     def __getitem__ (self, idx):
-        print('the path', os.path.join(self.path, 'noisy', 'spec', self.file_names[idx]))
+       
         noisy_spec= Image.fromarray(np.load(os.path.join(self.path, 'noisy', 'spec', self.file_names[idx])))
         original_spec=Image.fromarray( np.load(os.path.join(self.path, 'original', 'spec', self.file_names[idx])))
         noisy_phase=np.load(os.path.join(self.path, 'noisy', 'phase', self.file_names[idx]))
