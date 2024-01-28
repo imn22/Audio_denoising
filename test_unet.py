@@ -7,7 +7,7 @@ import torchvision
 from torch.utils.data import DataLoader
 from data import MyDataset
 from tqdm import tqdm
-from train_unet import get_pesq, get_stoi
+from train_unet import get_pesq, get_stoi, calculate_snr
 from args import config
 args= config()
 
@@ -81,8 +81,3 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
     return average_test_loss, average_snr_score,average_pesq_score, average_stoi_score
 
 
-def calculate_snr(original, noisy):
-    signal_power = np.mean(np.square(original))
-    noise_power = np.mean(np.square(original - noisy))
-    snr = 10 * np.log10(signal_power / noise_power)
-    return snr

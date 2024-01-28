@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import torch
 from torch import nn
 import torchvision
@@ -30,6 +31,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
     val_losses = []
     val_pesq_scores=[]
     val_stoi_scores=[]
+    val_snr=[]
 
     min_loss= 10e7
     # Training loop
@@ -63,6 +65,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         val_loss = 0.0
         total_pesq_score = 0.0
         total_stoi_score = 0.0
+        total_snr_score=0.0
 
         with torch.no_grad():
             for data in  val_loader:
@@ -78,6 +81,8 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
                 predicted_val= resize_spec(predicted_val)
                 pesq_score = get_pesq(original_singal_val, predicted_val, noisy_phase_val)
                 stoi_score = get_stoi(original_singal_val, predicted_val, noisy_phase_val)
+                snr_score = calculate_snr(original_singal_val, predicted_val, noisy_phase_val)
+                total_snr_score += snr_score
                 total_pesq_score += pesq_score
                 total_stoi_score += stoi_score
 
@@ -85,12 +90,14 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         average_val_loss = val_loss / len(val_loader)
         average_pesq_score = total_pesq_score / len(val_loader)
         average_stoi_score = total_stoi_score / len(val_loader)
+        average_snr_score = total_snr_score / len(val_loader)
+        val_snr.append(average_snr_score)
         val_losses.append(average_val_loss)
         val_pesq_scores.append(average_pesq_score)
         val_stoi_scores.append(average_stoi_score)
         print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
 
-    return train_losses, val_losses, val_pesq_scores, val_stoi_scores
+    return train_losses, val_losses,val_snr, val_pesq_scores, val_stoi_scores
     
 
 
@@ -116,3 +123,15 @@ def get_stoi(original_singal, predicted, noisy_phase):
     stoi = ShortTimeObjectiveIntelligibility(args.fs, False)
     result= stoi(predicted_sig, original_singal)
     return result.item()
+
+def calculate_snr(original_signal, predicted, noisy_phase):
+    original_signal = original_signal[1].cpu().numpy()
+    noisy_phase = noisy_phase.cpu().numpy()
+    predicted = predicted.cpu().numpy()
+    predicted_sig = retreive_sig(predicted, noisy_phase, args.n_fft, args.hop_length_fft)
+    # Directly compute power of the original and noise signals
+    signal_power = np.mean(np.square(original_signal))
+    noise_power = np.mean(np.square(original_signal - predicted_sig))
+
+    snr = 10 * np.log10(signal_power / noise_power)
+    return snr
