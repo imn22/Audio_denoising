@@ -52,7 +52,7 @@ def retreive_sig(magnitude_db, phase,n_fft, hop_length_fft ):
     #first go backt othe magnitude scale
     magnitude= librosa.db_to_amplitude(magnitude_db, ref= 1.0)
     #include the phase
-    signal_with_phase= magnitude * phase 
+    signal_with_phase= magnitude * np.expand_dims(phase, axis=1) 
     #recsntrct
     audio= librosa.core.istft(signal_with_phase, hop_length=hop_length_fft, n_fft=n_fft, center=True)
     if len(audio.shape)==3:
@@ -68,7 +68,7 @@ class MyDataset(Dataset):
     def __init__(self, path, transform=None):
         super().__init__()
         self.path= path
-        
+
         self.transform= transform
         self.file_names= os.listdir(os.path.join(path, 'original', 'spec'))
         
