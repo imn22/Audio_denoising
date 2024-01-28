@@ -52,11 +52,11 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         average_train_loss = train_loss / len(train_loader)
         train_losses.append(average_train_loss)
 
-        if train_loss < min_loss:
-            min_loss= train_loss
-            save_path = os.path.join(save_dir, f'checkpoint_ep_{epoch}.pth')
-            print('checkpoint saved at: ', save_path,)
-            torch.save(model.state_dict(), save_path)
+        # if train_loss < min_loss:
+        #     min_loss= train_loss
+        #     save_path = os.path.join(save_dir, f'checkpoint_ep_{epoch}.pth')
+        #     print('checkpoint saved at: ', save_path,)
+            # torch.save(model.state_dict(), save_path)
 
         # Validation
         model.eval()
