@@ -1,11 +1,11 @@
 import pickle
 import os
+import numpy as np
 import torch
 from torch import nn
 import torchvision
 from torch.utils.data import DataLoader
 from data import MyDataset
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from train_unet import get_pesq, get_stoi
 from args import config
@@ -29,12 +29,13 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
     test_loss = 0.0
     total_pesq_score=0.0
     total_stoi_score=0.0
+    total_snr_score=0.0
 
     file_names=[]
     spec=[]
     phase=[]
     with torch.no_grad():
-        for data in  test_loader:
+        for data in  tqdm(test_loader):
             noisy_spec_test, original_spec_test,  noisy_phase_test, original_singal_test, file_name_test = data
             noisy_spec_test, original_spec_test = noisy_spec_test.to(device), original_spec_test.to(device)
             predicted_test = model(noisy_spec_test)
@@ -46,6 +47,8 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
             predicted_test= resize_spec(predicted_test)
             pesq_score = get_pesq(original_singal_test, predicted_test, noisy_phase_test)
             stoi_score = get_stoi(original_singal_test, predicted_test, noisy_phase_test)
+            snr_score = calculate_snr(original_singal_test.cpu().numpy(), predicted_test.cpu().numpy())
+            total_snr_score += snr_score
             total_pesq_score += pesq_score
             total_stoi_score += stoi_score
 
@@ -53,6 +56,7 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
             file_names.append(file_name_test)
             spec.append(predicted_test)
             phase.append(noisy_phase_test)
+
 
             # Create result dictionary after the loop
             result_dict = {
@@ -71,6 +75,14 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
         average_test_loss = test_loss / len(test_loader)
         average_pesq_score = total_pesq_score / len(test_loader)
         average_stoi_score = total_stoi_score / len(test_loader)
-        print(f"Test Loss: {average_test_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
+        average_snr_score = total_snr_score / len(test_loader)
+        print(f"Test Loss: {average_test_loss:.4f}, Average SNR: {average_snr_score:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
 
-    return average_test_loss, average_pesq_score, average_stoi_score
+    return average_test_loss, average_snr_score,average_pesq_score, average_stoi_score
+
+
+def calculate_snr(original, noisy):
+    signal_power = np.mean(np.square(original))
+    noise_power = np.mean(np.square(original - noisy))
+    snr = 10 * np.log10(signal_power / noise_power)
+    return snr
