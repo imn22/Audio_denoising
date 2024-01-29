@@ -1,4 +1,5 @@
 import os
+import pickle
 import numpy as np
 import torch
 from torch import nn
@@ -24,7 +25,8 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
     print("Device:", device)
     model.to(device)
 
-    loss_function = nn.MSELoss()  
+    # loss_function = nn.MSELoss()  
+    loss_function = nn.HuberLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)  
     train_losses = []
@@ -54,11 +56,11 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         average_train_loss = train_loss / len(train_loader)
         train_losses.append(average_train_loss)
 
-        # if train_loss < min_loss:
-        #     min_loss= train_loss
-        #     save_path = os.path.join(save_dir, f'checkpoint_ep_{epoch}.pth')
-        #     print('checkpoint saved at: ', save_path,)
-            # torch.save(model.state_dict(), save_path)
+        if train_loss < min_loss:
+            min_loss= train_loss
+            save_path = os.path.join(save_dir, f'checkpoint_ep_{epoch}.pth')
+            print('checkpoint saved at: ', save_path,)
+            torch.save(model.state_dict(), save_path)
 
         # Validation
         model.eval()
@@ -96,7 +98,18 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         val_pesq_scores.append(average_pesq_score)
         val_stoi_scores.append(average_stoi_score)
         print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
-
+        
+        result_dict= {
+            'losses': val_losses,
+            'snr': val_snr,
+            'pesq_scores': val_pesq_scores,
+            'stoi_scores': val_stoi_scores, 
+        }
+        #save metrics
+        save_dict_path= os.path.join(save_dir, 'result_dict.pickle') 
+        with open(save_dict_path, 'wb') as f:
+            pickle.dump(result_dict, f)
+        print('results saved ! \n')
     return train_losses, val_losses,val_snr, val_pesq_scores, val_stoi_scores
     
 

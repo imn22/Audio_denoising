@@ -66,10 +66,7 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
             }
 
             # Save the results outside the loop
-            if save_dir:
-                save_path = os.path.join(save_dir, 'result_dict.pickle')
-                with open(save_path, 'wb') as f:
-                    pickle.dump(result_dict, f)
+            
 
         #Calculating average metrics for the epoch
         average_test_loss = test_loss / len(test_loader)
@@ -77,7 +74,12 @@ def test(model, data_path, checkpoint_path, batch_size, transform,  save_dir=Non
         average_stoi_score = total_stoi_score / len(test_loader)
         average_snr_score = total_snr_score / len(test_loader)
         print(f"Test Loss: {average_test_loss:.4f}, Average SNR: {average_snr_score:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
-
+        result_dict['metrics']= {'loss': average_test_loss, 'snr': average_snr_score, 'pesq': average_pesq_score, 'stoi': average_stoi_score}
+        if save_dir:
+                save_path = os.path.join(save_dir, 'result_dict.pickle')
+                with open(save_path, 'wb') as f:
+                    pickle.dump(result_dict, f)
+        print('saved result dict !')
     return average_test_loss, average_snr_score,average_pesq_score, average_stoi_score
 
 
