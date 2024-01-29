@@ -97,7 +97,7 @@ def train(model, data_path, batch_size, n_epochs, transform, save_dir=None):
         val_losses.append(average_val_loss)
         val_pesq_scores.append(average_pesq_score)
         val_stoi_scores.append(average_stoi_score)
-        print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
+        print(f"Epoch {epoch + 1}, Train Loss: {average_train_loss:.4f}, Validation Loss: {average_val_loss:.4f}, Validation SNR: {val_snr}, Average PESQ: {average_pesq_score:.4f}, Average STOI: {average_stoi_score:.4f}")
         
         result_dict= {
             'losses': val_losses,
