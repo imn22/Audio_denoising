@@ -1,6 +1,7 @@
 # Audio_denoising
 
-## Denoising
+**Consignes**
+
 Pour ce projet vous avez :
 
 Pour le train 
