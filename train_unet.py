@@ -143,8 +143,8 @@ def calculate_snr(original_signal, predicted, noisy_phase):
     predicted = predicted.cpu().numpy()
     predicted_sig = retreive_sig(predicted, noisy_phase, args.n_fft, args.hop_length_fft)
     # Directly compute power of the original and noise signals
-    signal_power = np.mean(np.square((original_signal- np.mean(original_signal))-(np.max(original_signal)- np.min(original_signal))))
-    noise_power = np.mean(np.square((original_signal- np.mean(original_signal))-(np.max(original_signal)- np.min(original_signal)) - (predicted_sig- np.mean(predicted_sig))-(np.max(predicted_sig)- np.min(predicted_sig))))
+    signal_power = np.mean(np.square((original_signal- np.mean(original_signal))/(np.max(original_signal)- np.min(original_signal))))
+    noise_power = np.mean(np.square((original_signal- np.mean(original_signal))/(np.max(original_signal)- np.min(original_signal)) - (predicted_sig- np.mean(predicted_sig))/(np.max(predicted_sig)- np.min(predicted_sig))))
 
     snr = 10 * np.log10(signal_power / noise_power)
     return snr
