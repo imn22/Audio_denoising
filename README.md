@@ -13,3 +13,4 @@ Additionnally, we will present some classical algorithms, as alternatives to the
 
 <center><img src="https://drive.google.com/uc?export=view&id=1s9EeIm7VVrZmoZNRojkW3uAgV9B_oysr" alt="Approaches">
 </center>
+
